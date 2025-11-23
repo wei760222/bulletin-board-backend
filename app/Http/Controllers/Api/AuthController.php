@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\Auth\AuthService;
-use App\Contracts\Auth\AuthServiceInterface;
+use App\Contracts\Services\Auth\AuthServiceInterface;
 use Illuminate\Validation\ValidationException;
 use App\Traits\ApiResponse;
 use Exception;
@@ -34,12 +34,13 @@ class AuthController extends BaseController
      *      operationId="loginUser",
      *      tags={"認證"},
      *      summary="用戶登入",
-     *      description="使用 Firebase Token 進行登入",
+     *      description="使用電子郵件和密碼進行登入",
      *      @OA\RequestBody(
      *          required=true,
      *          @OA\JsonContent(
-     *              required={"firebase_token"},
-     *              @OA\Property(property="firebase_token", type="string", example="your-firebase-id-token")
+     *              required={"email", "password"},
+     *              @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *              @OA\Property(property="password", type="string", format="password", example="password")
      *          )
      *      ),
      *      @OA\Response(
@@ -67,25 +68,29 @@ class AuthController extends BaseController
     public function login(LoginRequest $request): JsonResponse
     {
         try {
-          
-            $result = $this->authService->loginWithFirebase($request->firebase_token);
-
-            if (!$result['success']) {
-              return $this->error($result['message'], 401);
+            $credentials = $request->validated(); // 使用表單驗證
+            
+            if (!auth()->attempt($credentials)) {
+                return $this->error('帳號或密碼不正確', 401);
             }
 
-            $token = $result['user']->createToken('auth_token')->plainTextToken;
+            // 1. 獲取當前已認證的使用者
+            $user = auth()->user();
 
+            // 2. 為該使用者創建一個新的 API 令牌
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // 3. 返回成功響應
             return $this->success([
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-                'user' => new AuthResource($result['user'])
+                'access_token' => $token, // 返回訪問令牌
+                'token_type' => 'Bearer', // 令牌類型
+                'user' => new AuthResource($user) // 返回使用者資源
             ], 'Login successful');
 
         } catch (ValidationException $e) {
             return $this->error('Validation error', 422, $e->errors());
         } catch (\Exception $e) {
-           return $this->error('Login failed', 500, $this->getDebugMessage($e));
+            return $this->error('Login failed', 500, $this->getDebugMessage($e));
         }
     }
 

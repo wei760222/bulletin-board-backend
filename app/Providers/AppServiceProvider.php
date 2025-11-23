@@ -12,12 +12,12 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
          $this->app->bind(
-            \App\Contracts\Auth\FirebaseAuthServiceInterface::class,
+            \App\Contracts\Services\Auth\FirebaseAuthServiceInterface::class,
             \App\Services\Auth\FirebaseAuthService::class
         );
 
         $this->app->bind(
-            \App\Contracts\Auth\AuthServiceInterface::class,
+            \App\Contracts\Services\Auth\AuthServiceInterface::class,
             \App\Services\Auth\AuthService::class
         );
     }
