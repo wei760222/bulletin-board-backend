@@ -12,7 +12,13 @@ use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\JsonResponse;
 
-class AuthController extends Controller
+/**
+ * @OA\Tag(
+ *     name="認證",
+ *     description="認證相關的 API"
+ * )
+ */
+class AuthController extends BaseController
 {
     use ApiResponse;
     protected $authService;
@@ -22,11 +28,41 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-   /**
-     * 使用 Firebase Token 登入
-     *
-     * @param Request $request
-     * @return JsonResponse
+    /**
+     * @OA\Post(
+     *      path="/api/login",
+     *      operationId="loginUser",
+     *      tags={"認證"},
+     *      summary="用戶登入",
+     *      description="使用 Firebase Token 進行登入",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"firebase_token"},
+     *              @OA\Property(property="firebase_token", type="string", example="your-firebase-id-token")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="登入成功",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Login successful"),
+     *              @OA\Property(property="data", type="object",
+     *                  @OA\Property(property="access_token", type="string", example="1|randomtoken123"),
+     *                  @OA\Property(property="token_type", type="string", example="Bearer"),
+     *                  @OA\Property(property="user", type="object",
+     *                      @OA\Property(property="id", type="integer", example=1),
+     *                      @OA\Property(property="name", type="string", example="John Doe"),
+     *                      @OA\Property(property="email", type="string", example="john@example.com"),
+     *                      @OA\Property(property="role", type="string", example="user")
+     *                  )
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=401, description="認證失敗"),
+     *      @OA\Response(response=422, description="驗證錯誤")
+     * )
      */
     public function login(LoginRequest $request): JsonResponse
     {
@@ -53,9 +89,53 @@ class AuthController extends Controller
         }
     }
 
-     /**
-     * 用戶註冊
-     *
+
+    /**
+     * @OA\Post(
+     *     path="/api/register",
+     *     operationId="registerUser",
+     *     tags={"認證"},
+     *     summary="用戶註冊",
+     *     description="註冊新用戶",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "email", "password", "password_confirmation"},
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="註冊成功",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user", type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", example="user@example.com")
+     *                 ),
+     *                 @OA\Property(property="access_token", type="string", example="your_access_token"),
+     *                 @OA\Property(property="token_type", type="string", example="Bearer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="驗證錯誤",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="email", type="array",
+     *                     @OA\Items(type="string", example="The email has already been taken.")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      * @param Request $request
      * @return JsonResponse
      */
@@ -78,11 +158,37 @@ class AuthController extends Controller
         }
     }
 
-     /**
-     * 獲取當前登入用戶資訊
-     *
-     * @param Request $request
-     * @return JsonResponse
+    /**
+     * @OA\Get(
+     *     path="/api/user",
+     *     operationId="getUserProfile",
+     *     tags={"認證"},
+     *     summary="取得當前用戶資料",
+     *     description="取得當前登入用戶的資料",
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="成功取得用戶資料",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="user@example.com"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="未授權",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="未授權")
+     *         )
+     *     )
+     * )
      */
     public function user(Request $request): JsonResponse
     {

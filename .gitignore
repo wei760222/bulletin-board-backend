@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# Swagger
+public/docs
+storage/api-docs
+resources/views/vendor/l5-swagger/*
+!resources/views/vendor/l5-swagger/index.blade.php
