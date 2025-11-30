@@ -9,6 +9,7 @@
         "php": "^8.2",
         "darkaonline/l5-swagger": "^8.0",
         "firebase/php-jwt": "^6.11",
+        "google/cloud-firestore": "^1.54",
         "kreait/laravel-firebase": "^6.1",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.2",
