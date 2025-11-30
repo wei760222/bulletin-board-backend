@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use App\Http\Resources\AuthResource;
 
 /**
  * @OA\Tag(
@@ -69,7 +70,6 @@ class AuthController extends BaseController
     {
         try {
             $credentials = $request->validated(); // 使用表單驗證
-            
             if (!auth()->attempt($credentials)) {
                 return $this->error('帳號或密碼不正確', 401);
             }
@@ -78,13 +78,14 @@ class AuthController extends BaseController
             $user = auth()->user();
 
             // 2. 為該使用者創建一個新的 API 令牌
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $token = $user->createTokenWithExpiry('auth_token', ['*'], 7);
 
             // 3. 返回成功響應
             return $this->success([
-                'access_token' => $token, // 返回訪問令牌
+                'access_token' => $token->plainTextToken, // 返回訪問令牌
                 'token_type' => 'Bearer', // 令牌類型
-                'user' => new AuthResource($user) // 返回使用者資源
+                'user' => new AuthResource($user) ,// 返回使用者資源
+                'expires_at' => $token->accessToken->expires_at->setTimezone('Asia/Taipei')->toDateTimeString(),
             ], 'Login successful');
 
         } catch (ValidationException $e) {
